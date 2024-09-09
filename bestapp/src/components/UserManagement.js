@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
 import Navbar from './Navbar';
 import { useNavigate } from 'react-router-dom';
 import '../index.css';
@@ -7,14 +6,16 @@ import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged } from 'fir
 import { collection, deleteDoc, doc, getDocs, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([
+    
+  ]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [filter, setFilter] = useState(''); // Filter state
-  const [roleFilter, setRoleFilter] = useState(''); // Role filter state
+  const [filter, setFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
   const navigate = useNavigate();
 
   const auth = getAuth();
@@ -140,14 +141,9 @@ const UserManagement = () => {
 
   return (
     <div>
-      {/* Use Navbar component */}
       <Navbar />
-
-      {/* User Management Section */}
       <div className="min-h-screen bg-background p-6">
-        {/* Filter and Add User Section */}
         <div className="flex justify-end items-center mb-6 space-x-4">
-          {/* Filter Input */}
           <input
             type="text"
             placeholder="Filter by name, email..."
@@ -155,7 +151,6 @@ const UserManagement = () => {
             onChange={(e) => setFilter(e.target.value)}
             className="border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
           />
-          {/* Filter by Role */}
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -167,7 +162,6 @@ const UserManagement = () => {
             <option value="admin">Admin</option>
           </select>
 
-          {/* Add User Button */}
           <button
             onClick={() => setShowAddModal(true)}
             className="bg-main text-white px-6 py-2 rounded-md font-semibold hover:bg-bu transition-colors"
@@ -176,7 +170,7 @@ const UserManagement = () => {
           </button>
         </div>
 
-        {error && <p className="text-red-500 mb-4">{error}</p>} {/* Display error if any */}
+        {error && <p className="text-red-500 mb-4">{error}</p>}
 
         {loading ? (
           <p>Loading users...</p>
@@ -185,6 +179,7 @@ const UserManagement = () => {
             <thead>
               <tr className="bg-gray-100 text-left">
                 <th className="py-3 px-4">First Name</th>
+                <th className="py-3 px-4">Middle Name</th>
                 <th className="py-3 px-4">Last Name</th>
                 <th className="py-3 px-4">Course</th>
                 <th className="py-3 px-4">Year</th>
@@ -246,10 +241,7 @@ const UserManagement = () => {
         )}
       </div>
 
-      {/* Add User Modal */}
       {showAddModal && <UserModal closeModal={() => setShowAddModal(false)} saveUser={addUser} />}
-
-      {/* Edit User Modal */}
       {showEditModal && (
         <UserModal
           closeModal={() => setShowEditModal(false)}
@@ -261,7 +253,6 @@ const UserManagement = () => {
   );
 };
 
-// Modal Component for Adding and Editing Users
 const UserModal = ({ closeModal, saveUser, user }) => {
   const [formData, setFormData] = useState(
     user || { firstname: '', lastname: '', course: '', year: '', email: '', role: '' }
@@ -278,7 +269,7 @@ const UserModal = ({ closeModal, saveUser, user }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full overflow-y-auto max-h-[90vh]">
         <h2 className="text-2xl font-bold text-center mb-4">{user ? 'Edit User' : 'Add User'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -290,6 +281,16 @@ const UserModal = ({ closeModal, saveUser, user }) => {
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
               required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Middle Name</label>
+            <input
+              type="text"
+              name="middle_name"
+              value={formData.middle_name}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
             />
           </div>
           <div className="mb-4">
@@ -316,14 +317,18 @@ const UserModal = ({ closeModal, saveUser, user }) => {
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">Year</label>
-            <input
-              type="text"
+            <select
               name="year"
               value={formData.year}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
               required
-            />
+            >
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+            </select>
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">Email</label>
@@ -349,14 +354,17 @@ const UserModal = ({ closeModal, saveUser, user }) => {
           </div>: null}
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">Role</label>
-            <input
-              type="text"
+            <select
               name="role"
               value={formData.role}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
               required
-            />
+            >
+              <option value="student">Student</option>
+              <option value="instructor">Instructor</option>
+              <option value="admin">Admin</option>
+            </select>
           </div>
           <div className="flex justify-end space-x-2">
             <button
