@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import '../index.css';
 import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged } from 'firebase/auth';
 import { collection, deleteDoc, doc, getDocs, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState([
-    
-  ]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -20,6 +20,7 @@ const UserManagement = () => {
 
   const auth = getAuth();
   const db = getFirestore();
+
   // Check if the user is authenticated and redirect if not
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -32,7 +33,6 @@ const UserManagement = () => {
     return () => unsubscribe();
   }, [auth, navigate]);
 
-
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -42,11 +42,7 @@ const UserManagement = () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'users'));
       const usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      usersData.sort((a, b) => {
-        if (a.verified) return 1;
-        if (!a.verified) return -1;
-        return 0;
-      });
+      usersData.sort((a, b) => (a.verified ? 1 : -1));
       setUsers(usersData);
     } catch (error) {
       console.error('Failed to fetch users:', error.message);
@@ -60,40 +56,26 @@ const UserManagement = () => {
     const userDocRef = doc(db, 'users', user.id);
   
     try {
-      await updateDoc(userDocRef, {
-        verified: true
-      });
+      await updateDoc(userDocRef, { verified: true });
       fetchUsers();
       console.log(`User ${user.id} has been verified.`);
     } catch (error) {
       console.error('Error verifying user:', error.message);
     }
   };
+
   const addUser = async (user) => {
-    const usersCollectionRef = collection(db, 'users');
-  
     try {
-       // Create user in Firebase Authentication
-       const userCredential= await createUserWithEmailAndPassword(
-        auth,
-        user.email,
-        user.password // Make =-sure user.password is provided
-      );
+      const userCredential = await createUserWithEmailAndPassword(auth, user.email, user.password);
       const userId = userCredential.user.uid;
       user['verified'] = true;
-      await setDoc(doc(db, 'users', userId), {
-        ...user,
-        id: userId // Include UID in the Firestore document
-      });
-      
-      // Add the new user to the local state with the newly generated ID
-      setUsers((prevUsers) => [
-        ...prevUsers,
-        { id: userId, ...user }
-      ]);
+      await setDoc(doc(db, 'users', userId), { ...user, id: userId });
+      setUsers((prevUsers) => [...prevUsers, { id: userId, ...user }]);
       setShowAddModal(false);
+      toast.success('User added successfully!');
     } catch (error) {
       console.error('Failed to add user:', error.message);
+      toast.error(`Failed to add user: ${error.message}`);
       setError('Failed to add user');
     }
   };
@@ -103,15 +85,14 @@ const UserManagement = () => {
   
     try {
       await updateDoc(userDocRef, user);
-      console.log(`User ${user.id} has been updated.`);
-      
-      // Assuming `user` object has the updated data
       setUsers((prevUsers) =>
         prevUsers.map((u) => (u.id === user.id ? { ...u, ...user } : u))
       );
       setShowEditModal(false);
+      toast.success('User updated successfully!');
     } catch (error) {
       console.error('Failed to update user:', error.message);
+      toast.error(`Failed to update user: ${error.message}`);
       setError('Failed to update user');
     }
   };
@@ -121,10 +102,11 @@ const UserManagement = () => {
   
     try {
       await deleteDoc(userDocRef);
-      console.log(`User ${id} has been deleted.`);
       setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+      toast.success('User deleted successfully!');
     } catch (error) {
       console.error('Failed to delete user:', error.message);
+      toast.error(`Failed to delete user: ${error.message}`);
       setError('Failed to delete user');
     }
   };
@@ -142,29 +124,30 @@ const UserManagement = () => {
   return (
     <div>
       <Navbar />
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
       <div className="min-h-screen bg-background p-6">
-        <div className="flex justify-end items-center mb-6 space-x-4">
+        <div className="flex flex-col md:flex-row md:justify-end md:items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
           <input
             type="text"
             placeholder="Filter by name, email..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+            className="border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-main w-full md:w-1/3"
           />
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+            className="border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-main w-full md:w-1/4"
           >
             <option value="">All Roles</option>
             <option value="student">Student</option>
-            <option value="instructor">Instructor                                                                                         </option>
+            <option value="instructor">Instructor</option>
             <option value="admin">Admin</option>
           </select>
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="bg-main text-white px-6 py-2 rounded-md font-semibold hover:bg-bu transition-colors"
+            className="bg-main text-white px-6 py-2 rounded-md font-semibold hover:bg-bu transition-colors w-full md:w-auto"
           >
             Add User
           </button>
@@ -175,69 +158,71 @@ const UserManagement = () => {
         {loading ? (
           <p>Loading users...</p>
         ) : (
-          <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg">
-            <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="py-3 px-4">First Name</th>
-                <th className="py-3 px-4">Middle Name</th>
-                <th className="py-3 px-4">Last Name</th>
-                <th className="py-3 px-4">Course</th>
-                <th className="py-3 px-4">Year</th>
-                <th className="py-3 px-4">Email</th>
-                <th className="py-3 px-4">Role</th>
-                <th className="py-3 px-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">{user.firstname}</td>
-                  <td className="py-3 px-4">{user.lastname}</td>
-                  <td className="py-3 px-4">{user.course}</td>
-                  <td className="py-3 px-4">{user.year}</td>
-                  <td className="py-3 px-4">{user.email}</td>
-                  <td className="py-3 px-4">{user.role}</td>
-                  {user.verified ? 
-                  
-                  <td className="py-3 px-4 space-x-2">
-                  <button
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setShowEditModal(true);
-                    }}
-                    className="text-white bg-blue-500 px-2 py-1 rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => deleteUser(user.id)}
-                    className="text-white bg-red-500 px-2 py-1 rounded-md hover:bg-red-700 transition-colors"
-                  >
-                    Delete
-                  </button>
-                </td>
-                :
-                <td className="py-3 px-4 space-x-2">
-                  <button
-                    onClick={() => {
-                      acceptUser(user);
-                      // setShowEditModal(true);
-                    }}
-                    className="text-white bg-green-500 px-2 py-1 rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => deleteUser(user.id)}
-                    className="text-white bg-red-500 px-2 py-1 rounded-md hover:bg-red-700 transition-colors"
-                  >
-                    Reject
-                  </button>
-                </td>}
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg">
+              <thead>
+                <tr className="bg-gray-100 text-left">
+                  <th className="py-3 px-4">First Name</th>
+                  <th className="py-3 px-4">Middle Name</th>
+                  <th className="py-3 px-4">Last Name</th>
+                  <th className="py-3 px-4">Course</th>
+                  <th className="py-3 px-4">Year</th>
+                  <th className="py-3 px-4">Email</th>
+                  <th className="py-3 px-4">Role</th>
+                  <th className="py-3 px-4">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="border-b hover:bg-gray-50">
+                    <td className="py-3 px-4">{user.firstname}</td>
+                    <td className="py-3 px-4">{user.middlename}</td>
+                    <td className="py-3 px-4">{user.lastname}</td>
+                    <td className="py-3 px-4">{user.course}</td>
+                    <td className="py-3 px-4">{user.year}</td>
+                    <td className="py-3 px-4">{user.email}</td>
+                    <td className="py-3 px-4">{user.role}</td>
+                    <td className="py-3 px-4 space-x-2">
+                      {user.verified ? (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowEditModal(true);
+                            }}
+                            className="text-white bg-blue-500 px-2 py-1 rounded-md hover:bg-blue-700 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteUser(user.id)}
+                            className="text-white bg-red-500 px-2 py-1 rounded-md hover:bg-red-700 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => acceptUser(user)}
+                            className="text-white bg-green-500 px-2 py-1 rounded-md hover:bg-green-700 transition-colors"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => deleteUser(user.id)}
+                            className="text-white bg-red-500 px-2 py-1 rounded-md hover:bg-red-700 transition-colors"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -255,7 +240,7 @@ const UserManagement = () => {
 
 const UserModal = ({ closeModal, saveUser, user }) => {
   const [formData, setFormData] = useState(
-    user || { firstname: '', lastname: '', course: '', year: '', email: '', role: '' }
+    user || { firstname: '', middlename: '', lastname: '', course: '', year: '', email: '', role: '', password: '' }
   );
 
   const handleChange = (e) => {
@@ -272,49 +257,20 @@ const UserModal = ({ closeModal, saveUser, user }) => {
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full overflow-y-auto max-h-[90vh]">
         <h2 className="text-2xl font-bold text-center mb-4">{user ? 'Edit User' : 'Add User'}</h2>
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">First Name</label>
-            <input
-              type="text"
-              name="firstname"
-              value={formData.firstname}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Middle Name</label>
-            <input
-              type="text"
-              name="middle_name"
-              value={formData.middle_name}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Last Name</label>
-            <input
-              type="text"
-              name="lastname"
-              value={formData.lastname}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Course</label>
-            <input
-              type="text"
-              name="course"
-              value={formData.course}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
-              required
-            />
-          </div>
+          {/* Form Fields */}
+          {['firstname', 'middlename', 'lastname', 'course', 'email'].map((field, index) => (
+            <div className="mb-4" key={index}>
+              <label className="block text-gray-700 mb-2">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+              <input
+                type="text"
+                name={field}
+                value={formData[field]}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+                required={field !== 'middlename'}
+              />
+            </div>
+          ))}
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">Year</label>
             <select
@@ -324,34 +280,27 @@ const UserModal = ({ closeModal, saveUser, user }) => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
               required
             >
-              <option value="1st Year">1st Year</option>
-              <option value="2nd Year">2nd Year</option>
-              <option value="3rd Year">3rd Year</option>
-              <option value="4th Year">4th Year</option>
+              <option value="">Select Year</option>
+              {['1st Year', '2nd Year', '3rd Year', '4th Year'].map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
             </select>
           </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
-              required
-            />
-          </div>
-          {!user ? <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
-              required
-            />
-          </div>: null}
+          {!user && (
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+                required
+              />
+            </div>
+          )}
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">Role</label>
             <select
@@ -361,9 +310,11 @@ const UserModal = ({ closeModal, saveUser, user }) => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
               required
             >
-              <option value="student">Student</option>
-              <option value="instructor">Instructor</option>
-              <option value="admin">Admin</option>
+              {['student', 'instructor', 'admin'].map((role) => (
+                <option key={role} value={role}>
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                </option>
+              ))}
             </select>
           </div>
           <div className="flex justify-end space-x-2">
