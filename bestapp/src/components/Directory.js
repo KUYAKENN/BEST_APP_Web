@@ -66,17 +66,17 @@ const Directory = () => {
 
       {/* Directory Management Section */}
       <div className="min-h-screen bg-gray-100 p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
           <input
             type="text"
             placeholder="Search by name, email, or position..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-1/3 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+            className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main mb-4 md:mb-0"
           />
           <button
             onClick={() => setShowAddModal(true)}
-            className="bg-main text-white px-6 py-2 rounded-md font-semibold hover:bg-bu transition-colors"
+            className="bg-main text-white px-6 py-2 rounded-md font-semibold hover:bg-bu transition-colors w-full md:w-auto"
           >
             Add Entry
           </button>
@@ -145,7 +145,15 @@ const Directory = () => {
 // Modal Component for Adding and Editing Entries
 const EntryModal = ({ closeModal, saveEntry, entry }) => {
   const [formData, setFormData] = useState(
-    entry || { name: '', position: '', email: '', background: '', picture: '' }
+    entry || {
+      name: '',
+      position: '',
+      email: '',
+      background: '',
+      educationalAttainment: '', // New field for educational attainment
+      research: [''], // Updated to be an array for multiple research entries
+      picture: '',
+    }
   );
   const [pictureFile, setPictureFile] = useState(null); // State for picture file
 
@@ -157,39 +165,56 @@ const EntryModal = ({ closeModal, saveEntry, entry }) => {
     setPictureFile(e.target.files[0]); // Set the picture file state
   };
 
+  const handleResearchChange = (index, value) => {
+    const newResearch = [...formData.research];
+    newResearch[index] = value;
+    setFormData({ ...formData, research: newResearch });
+  };
+
+  const addResearchField = () => {
+    setFormData({ ...formData, research: [...formData.research, ''] });
+  };
+
+  const removeResearchField = (index) => {
+    const newResearch = formData.research.filter((_, i) => i !== index);
+    setFormData({ ...formData, research: newResearch });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     saveEntry(formData, pictureFile);
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full mx-4 overflow-y-auto max-h-[80vh]">
         <h2 className="text-2xl font-bold text-center mb-4">{entry ? 'Edit Entry' : 'Add Entry'}</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
-              required
-            />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-700 mb-2">Name</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 mb-2">Position</label>
+              <input
+                type="text"
+                name="position"
+                value={formData.position}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+                required
+              />
+            </div>
           </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Position</label>
-            <input
-              type="text"
-              name="position"
-              value={formData.position}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
-              required
-            />
-          </div>
-          <div className="mb-4">
+          <div>
             <label className="block text-gray-700 mb-2">Email</label>
             <input
               type="email"
@@ -200,7 +225,7 @@ const EntryModal = ({ closeModal, saveEntry, entry }) => {
               required
             />
           </div>
-          <div className="mb-4">
+          <div>
             <label className="block text-gray-700 mb-2">Background</label>
             <input
               type="text"
@@ -210,7 +235,47 @@ const EntryModal = ({ closeModal, saveEntry, entry }) => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
             />
           </div>
-          <div className="mb-4">
+          <div>
+            <label className="block text-gray-700 mb-2">Educational Attainment</label>
+            <input
+              type="text"
+              name="educationalAttainment"
+              value={formData.educationalAttainment}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 mb-2">Research</label>
+            {formData.research.map((research, index) => (
+              <div key={index} className="flex items-center mb-2">
+                <textarea
+                  name="research"
+                  value={research}
+                  onChange={(e) => handleResearchChange(index, e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+                  rows="2"
+                />
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeResearchField(index)}
+                    className="ml-2 bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-700 transition-colors"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addResearchField}
+              className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Add Research
+            </button>
+          </div>
+          <div>
             <label className="block text-gray-700 mb-2">Picture</label>
             <input
               type="file"
