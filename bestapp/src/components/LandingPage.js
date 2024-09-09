@@ -6,14 +6,13 @@ import { supabase } from '../supabaseClient'; // Import Supabase client
 
 const Navbar = () => {
   const navigate = useNavigate();
-
-  // Function to handle logout
+  const auth = getAuth();
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      await signOut(auth);
+      navigate('/login'); // Redirect to the home page after logout
+    } catch (error) {
       console.error('Error logging out:', error);
-    } else {
-      navigate('/'); // Redirect to login page after logout
     }
   };
 

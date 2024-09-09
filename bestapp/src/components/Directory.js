@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar'; // Import the reusable Navbar component
 import '../index.css';
+import { addDoc, doc, getFirestore, updateDoc,collection, getDocs } from 'firebase/firestore';
+import {  getStorage,ref,uploadBytes,getDownloadURL} from 'firebase/storage';
 
 const Directory = () => {
   const [entries, setEntries] = useState([]);
@@ -9,10 +11,14 @@ const Directory = () => {
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const db = getFirestore();
+    const storage = getStorage();
+
   // Load entries from local storage on component mount
   useEffect(() => {
     const storedEntries = JSON.parse(localStorage.getItem('directoryEntries')) || [];
-    setEntries(storedEntries);
+    // setEntries(storedEntries);
+    fetchDirectoryEntries();
   }, []);
 
   // Save entries to local storage whenever they change
@@ -21,34 +27,98 @@ const Directory = () => {
   }, [entries]);
 
   // Add a new entry to the directory
-  const addEntry = (entry, pictureFile) => {
-    const newEntry = {
-      ...entry,
-      id: entries.length > 0 ? entries[entries.length - 1].id + 1 : 1, // Generate new ID
-      picture: pictureFile ? URL.createObjectURL(pictureFile) : '', // Convert picture to a temporary URL
-    };
-    setEntries([...entries, newEntry]);
-    setShowAddModal(false);
+  const addEntry = async (entry, pictureFile) => {
+    
+    const directoryCollectionRef = collection(db, 'directory');
+  
+    try {
+      let pictureURL = '';
+  
+      if (pictureFile) {
+        // Create a reference to the file in Firebase Storage
+        const pictureRef = ref(storage, `pictures/${Date.now()}_${pictureFile.name}`);
+  
+        // Upload the file
+        await uploadBytes(pictureRef, pictureFile);
+  
+        // Get the download URL
+        pictureURL = await getDownloadURL(pictureRef);
+      }
+  
+      // Add the entry to Firestore
+      const newEntry = {
+        ...entry,
+        picture: pictureURL, // Use the download URL of the uploaded picture
+      };
+  
+      await addDoc(directoryCollectionRef, newEntry);
+  
+      console.log('Entry added successfully.');
+      setEntries((prevEntries) => [...prevEntries, newEntry]);
+      setShowAddModal(false);
+    } catch (error) {
+      console.error('Error adding entry:', error.message);
+    }
   };
 
-  // Edit an existing entry
-  const editEntry = (updatedEntry, pictureFile) => {
-    const updatedEntries = entries.map((entry) =>
-      entry.id === updatedEntry.id
-        ? {
-            ...updatedEntry,
-            picture: pictureFile ? URL.createObjectURL(pictureFile) : updatedEntry.picture,
-          }
-        : entry
-    );
-    setEntries(updatedEntries);
-    setShowEditModal(false);
+  const editEntry = async (updatedEntry, pictureFile) => {
+    const entryDocRef = doc(db, 'directory', updatedEntry.id); // Reference to the Firestore document
+  
+    try {
+      let pictureURL = updatedEntry.picture; // Use existing picture URL if no new file is provided
+  
+      if (pictureFile) {
+        // Create a reference to the new file in Firebase Storage
+        const pictureRef = ref(storage, `pictures/${Date.now()}_${pictureFile.name}`);
+  
+        // Upload the file
+        await uploadBytes(pictureRef, pictureFile);
+  
+        // Get the download URL
+        pictureURL = await getDownloadURL(pictureRef);
+      }
+  
+      // Update the Firestore document
+      await updateDoc(entryDocRef, {
+        ...updatedEntry,
+        picture: pictureURL, // Update with the new picture URL
+      });
+  
+      console.log('Entry updated successfully.');
+      // Update the local state with the updated entry
+      setEntries((prevEntries) =>
+        prevEntries.map((entry) =>
+          entry.id === updatedEntry.id
+            ? { ...updatedEntry, picture: pictureURL }
+            : entry
+        )
+      );
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Error updating entry:', error.message);
+    }
   };
-
   // Delete an entry
   const deleteEntry = (id) => {
     const updatedEntries = entries.filter((entry) => entry.id !== id);
     setEntries(updatedEntries);
+  };
+  const fetchDirectoryEntries = async () => {
+    const db = getFirestore();
+    const directoryCollectionRef = collection(db, 'directory');
+  
+    try {
+      const querySnapshot = await getDocs(directoryCollectionRef);
+      const entries = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setEntries(entries);
+      console.log('Fetched entries:', entries);
+      return entries;
+    } catch (error) {
+      console.error('Error fetching directory entries:', error.message);
+    }
   };
 
   // Filter entries based on search query

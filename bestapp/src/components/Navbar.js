@@ -2,32 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import bestLogo from '../assets/best.png'; // Import your logo
 import { supabase } from '../supabaseClient'; // Import Supabase client
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu
   const navigate = useNavigate();
+  const auth = getAuth();
 
   // Function to handle logout
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error logging out:', error);
-    } else {
+  
+    try {
+      await signOut(auth);
+      console.log('User logged out successfully.');
       navigate('/login'); // Redirect to login page after logout
+    } catch (error) {
+      console.error('Error logging out:', error.message);
     }
   };
 
-  // Check if the user is logged in
   useEffect(() => {
-    const checkUserSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session) {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
         navigate('/login'); // Redirect to login page if not logged in
       }
-    };
+    });
 
-    checkUserSession();
-  }, [navigate]);
+    // Clean up the subscription on unmount
+    return () => unsubscribe();
+  }, [auth, navigate]);
+
 
   return (
     <header className="bg-white shadow-md py-4 px-8 flex justify-between items-center">
