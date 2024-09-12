@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import UserManagement from './components/UserManagement';
 import Directory from './components/Directory'; // Import the Directory component
@@ -6,6 +6,8 @@ import LoginPage from './components/LoginPage'; // Import
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import {getToken, getMessaging, onMessage} from "firebase/messaging";
+import { toast, ToastContainer } from "react-toastify";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -20,13 +22,54 @@ const firebaseConfig = {
   appId: "1:980959173211:web:e101c44a09f70ddf8e7d7e",
   measurementId: "G-P0KW57G0DL"
 };
+// if ('serviceWorker' in navigator) {
+//   navigator.serviceWorker
+//     .register('/firebase-messaging-sw.js')
+//     .then((registration) => {
+//       console.log('Service Worker registered with scope:', registration.scope);
+//     })
+//     .catch((error) => {
+//       console.error('Service Worker registration failed:', error);
+//     });
+// }
+
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
+// import { getToken } from "firebase/messaging";
+// import { messaging } from "./firebase/firebaseConfig";
+const messaging = getMessaging(app);
+const  VITE_APP_VAPID_KEY = 'BIaL6wkWdoinVktvlusuJ-TcPSKIiduu_kO43RB1Sb-BUhyqpJa_hPlWTDzqsHhQh9muGIj3oZx06V9QNIvehGc';
+
+async function requestPermission() {
+  //requesting permission using Notification API
+  
+  const permission = await Notification.requestPermission();
+
+  if (permission === "granted") {
+    const token = await getToken(messaging, {
+      vapidKey: VITE_APP_VAPID_KEY,
+    });
+
+    //We can send token to server
+    console.log("Token generated : ", token);
+  } else if (permission === "denied") {
+    //notifications are blocked
+    alert("You denied for the notification");
+  }
+}
+
+
 const App = () => {
+  
+  useEffect(() => {
+    requestPermission();
+  }, []);
+
   return (
+    <>
     <Router>
       <Routes>
         {/* Route for the login page */}
@@ -43,6 +86,9 @@ const App = () => {
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
+    <ToastContainer />
+    </>
+    
   );
 };
 

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import bestLogo from '../assets/best.png'; // Import your logo
-import { supabase } from '../supabaseClient'; // Import Supabase client
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { onMessage } from 'firebase/messaging';
+import { toast, ToastContainer } from "react-toastify";
+import { messaging } from '../firebase/firebaseConfig';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu
@@ -32,7 +34,9 @@ const Navbar = () => {
     return () => unsubscribe();
   }, [auth, navigate]);
 
-
+  onMessage(messaging, (payload) => {
+    alert(payload.notification.title ?? 'New account registration');
+  });
   return (
     <header className="bg-white shadow-md py-4 px-8 flex justify-between items-center">
       {/* Logo and Branding */}
@@ -102,6 +106,7 @@ const Navbar = () => {
           </button>
         </div>
       )}
+      {/* <ToastContainer/> */}
     </header>
   );
 };
