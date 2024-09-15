@@ -34,9 +34,10 @@ const Navbar = () => {
     return () => unsubscribe();
   }, [auth, navigate]);
 
-  onMessage(messaging, (payload) => {
-    alert(payload.notification.title ?? 'New account registration');
-  });
+  // onMessage(messaging, (payload) => {
+  //   console.
+  //   // alert(payload.notification.title ?? 'New account registration');
+  // });
   return (
     <header className="bg-white shadow-md py-4 px-8 flex justify-between items-center">
       {/* Logo and Branding */}

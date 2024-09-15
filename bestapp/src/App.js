@@ -8,20 +8,23 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import {getToken, getMessaging, onMessage} from "firebase/messaging";
 import { toast, ToastContainer } from "react-toastify";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { doc, getFirestore, updateDoc } from 'firebase/firestore';
+import { messaging} from './firebase/firebaseConfig'
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCx_rdyDQwo62aXQvAVbfI6V6OjJuF-twA",
-  authDomain: "bestapp-66e4d.firebaseapp.com",
-  projectId: "bestapp-66e4d",
-  storageBucket: "bestapp-66e4d.appspot.com",
-  messagingSenderId: "980959173211",
-  appId: "1:980959173211:web:e101c44a09f70ddf8e7d7e",
-  measurementId: "G-P0KW57G0DL"
-};
+// const firebaseConfig = {
+//   apiKey: "AIzaSyCx_rdyDQwo62aXQvAVbfI6V6OjJuF-twA",
+//   authDomain: "bestapp-66e4d.firebaseapp.com",
+//   projectId: "bestapp-66e4d",
+//   storageBucket: "bestapp-66e4d.appspot.com",
+//   messagingSenderId: "980959173211",
+//   appId: "1:980959173211:web:e101c44a09f70ddf8e7d7e",
+//   measurementId: "G-P0KW57G0DL"
+// };
 // if ('serviceWorker' in navigator) {
 //   navigator.serviceWorker
 //     .register('/firebase-messaging-sw.js')
@@ -35,12 +38,13 @@ const firebaseConfig = {
 
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
+// const app = initializeApp(firebaseConfig);
+// const analytics = getAnalytics(app);
+const db = getFirestore();
+const auth = getAuth();
 // import { getToken } from "firebase/messaging";
 // import { messaging } from "./firebase/firebaseConfig";
-const messaging = getMessaging(app);
+
 const  VITE_APP_VAPID_KEY = 'BIaL6wkWdoinVktvlusuJ-TcPSKIiduu_kO43RB1Sb-BUhyqpJa_hPlWTDzqsHhQh9muGIj3oZx06V9QNIvehGc';
 
 async function requestPermission() {
@@ -52,6 +56,13 @@ async function requestPermission() {
     const token = await getToken(messaging, {
       vapidKey: VITE_APP_VAPID_KEY,
     });
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        updateToken(token,user.uid);
+        // console.log('HATDOG',user);
+        unsubscribe();
+      }
+    });
 
     //We can send token to server
     console.log("Token generated : ", token);
@@ -62,8 +73,28 @@ async function requestPermission() {
 }
 
 
+
+const updateToken = async (token, userId) => {
+  if(!auth.currentUser?.uid){
+    return;
+  }
+  const userDocRef = doc(db, 'users', userId);
+
+  try {
+    await updateDoc(userDocRef, { token: token });
+    // fetchUsers();
+    console.log(`Token refreshed.`);
+  } catch (error) {
+    console.error('Error verifying user:', error.message);
+  }
+};
+
+
 const App = () => {
-  
+  onMessage(messaging, (payload) => {
+    // console.log("???")
+    alert(payload.notification.title ?? 'New account registration');
+  });
   useEffect(() => {
     requestPermission();
   }, []);
