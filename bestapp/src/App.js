@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import UserManagement from './components/UserManagement';
 import Directory from './components/Directory'; // Import the Directory component
 import LoginPage from './components/LoginPage'; // Import 
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -38,7 +37,6 @@ const App = () => {
 
         {/* Redirect to UserManagement as the default landing page for authenticated users */}
         <Route path="/" element={<Navigate to="/users" />} />
-
         {/* Catch-all route to handle undefined routes */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
