@@ -192,9 +192,9 @@ const UserManagement = () => {
   // Filtered users based on the filter input and role filter
   const filteredUsers = users.filter((user) => {
     return (
-      (user.firstname.toLowerCase().includes(filter.toLowerCase()) ||
-        user.lastname.toLowerCase().includes(filter.toLowerCase()) ||
-        user.email.toLowerCase().includes(filter.toLowerCase())) &&
+      (user.firstname?.toLowerCase().includes(filter.toLowerCase()) ||
+        user.lastname?.toLowerCase().includes(filter.toLowerCase()) ||
+        user.email?.toLowerCase().includes(filter.toLowerCase())) &&
       (roleFilter ? user.role.toLowerCase() === roleFilter.toLowerCase() : true)
     );
   });
