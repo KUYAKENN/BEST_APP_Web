@@ -36,6 +36,12 @@ import { messaging} from './firebase/firebaseConfig'
 // }
 
 
+
+
+
+
+
+
 // Initialize Firebase
 // const app = initializeApp(firebaseConfig);
 // const analytics = getAnalytics(app);
@@ -70,8 +76,6 @@ async function requestPermission() {
     alert("You denied for the notification");
   }
 }
-
-
 
 const updateToken = async (token, userId) => {
   if(!auth.currentUser?.uid){
