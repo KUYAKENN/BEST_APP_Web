@@ -34,6 +34,10 @@ import { messaging} from './firebase/firebaseConfig'
 //       console.error('Service Worker registration failed:', error);
 //     });
 // }
+
+
+
+
 // Initialize Firebase
 // const app = initializeApp(firebaseConfig);
 // const analytics = getAnalytics(app);
