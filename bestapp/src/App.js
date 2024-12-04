@@ -35,14 +35,13 @@ import { messaging} from './firebase/firebaseConfig'
 //     });
 // }
 
-
-
-
 const db = getFirestore();
 const auth = getAuth();
 // import { getToken } from "firebase/messaging";
 // import { messaging } from "./firebase/firebaseConfig";
-
+// Initialize Firebase
+// const app = initializeApp(firebaseConfig);
+// const analytics = getAnalytics(app);
 const  VITE_APP_VAPID_KEY = 'BIaL6wkWdoinVktvlusuJ-TcPSKIiduu_kO43RB1Sb-BUhyqpJa_hPlWTDzqsHhQh9muGIj3oZx06V9QNIvehGc';
 
 async function requestPermission() {
