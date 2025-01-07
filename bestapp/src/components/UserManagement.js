@@ -51,7 +51,7 @@ const UserManagement = () => {
     // //   scopes,
     // //   undefined
     // // );
-  
+    
     // // Obtain an access token
     // const tokens = await jwtClient.authorize();
     // const accessToken = tokens.access_token;
@@ -259,7 +259,10 @@ const UserManagement = () => {
                     <td className="py-3 px-4">{user.course}</td>
                     <td className="py-3 px-4">{user.year}</td>
                     <td className="py-3 px-4">{user.email}</td>
-                    <td className="py-3 px-4">{user.role}</td>
+                    <td className="py-3 px-4">
+                      {user.role === 'instructor' ? 'Faculty' : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    </td>
+
                     <td className="py-3 px-4 space-x-2">
                       {user.verified ? (
                         <>
@@ -388,18 +391,18 @@ const UserModal = ({ closeModal, saveUser, user }) => {
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">Role</label>
             <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
-              required
-            >
-              {['student', 'instructor', 'admin'].map((role) => (
-                <option key={role} value={role}>
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
-                </option>
-              ))}
-            </select>
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-main"
+                required
+              >
+                {['student', 'instructor', 'admin'].map((role) => (
+                  <option key={role} value={role}>
+                    {role === 'instructor' ? 'Faculty' : role.charAt(0).toUpperCase() + role.slice(1)}
+                  </option>
+                ))}
+              </select>
           </div>
           <div className="flex justify-end space-x-2">
             <button
