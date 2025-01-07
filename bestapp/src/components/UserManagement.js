@@ -219,7 +219,7 @@ const UserManagement = () => {
           >
             <option value="">All Roles</option>
             <option value="student">Student</option>
-            <option value="instructor">Instructor</option>
+            <option value="instructor">Faculty</option>
             <option value="admin">Admin</option>
           </select>
 
@@ -365,7 +365,7 @@ const UserModal = ({ closeModal, saveUser, user }) => {
               required
             >
               <option value="">Select Year</option>
-              {['1st Year', '2nd Year', '3rd Year', '4th Year','INSTRUCTOR'].map((year) => (
+              {['1st Year', '2nd Year', '3rd Year', '4th Year','Faculty'].map((year) => (
                 <option key={year} value={year}>
                   {year}
                 </option>
